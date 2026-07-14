@@ -25,11 +25,15 @@ GOOS ?= $(call err_if_empty,NATIVE_GOOS)
 NATIVE_GOARCH := $(shell env -u GOARCH $(GO) env GOARCH)
 GOARCH ?= $(NATIVE_GOARCH)
 
+ifeq ($(GOOS), windows)
+    TARGET := $(addsuffix .exe,$(TARGET))
+endif
+
 .PHONY: default
 default: all
 
 .PHONY: all
-all: binary binary-win binary-darwin
+all: binary
 
 .PHONY: binary
 binary: $(TARGET)  ## Build podman-tui binary
@@ -39,19 +43,7 @@ binary: $(TARGET)  ## Build podman-tui binary
 $(TARGET): $(SRC)
 	@mkdir -p $(BIN)
 	@echo "running go build"
-	@env CGO_ENABLED=0 $(GO) build $(BUILDFLAGS) -o $(BIN)/$(TARGET) -tags $(BUILDTAGS)
-
-.PHONY: binary-win
-binary-win:  ## Build podman-tui.exe windows binary
-	@mkdir -p $(BIN)/windows/
-	@echo "running go build for windows"
-	@env CGO_ENABLED=0 GOOS=windows GOARCH=$(GOARCH) $(GO) build $(BUILDFLAGS) -o $(BIN)/windows/$(TARGET).exe -tags $(BUILDTAGS)
-
-.PHONY: binary-darwin
-binary-darwin: ## Build podman-tui for darwin
-	@mkdir -p $(BIN)/darwin/
-	@echo "running go build for darwin"
-	@env CGO_ENABLED=0 GOOS=darwin GOARCH=$(GOARCH) $(GO) build $(BUILDFLAGS) -o $(BIN)/darwin/$(TARGET) -tags $(BUILDTAGS)
+	@env CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) $(GO) build $(BUILDFLAGS) -o $(BIN)/$(TARGET) -tags $(BUILDTAGS)
 
 .PHONY: clean
 clean:
