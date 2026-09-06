@@ -1,0 +1,80 @@
+---
+name: Release
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  GO_VERSION: '1.25.9'
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [linux, darwin, windows]
+        arch: [amd64, arm64]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup environment
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Build binaries (Linux, Darwin and Windows)
+        env:
+          VERSION: "${{ github.ref_name }}"
+          GOOS: "${{ matrix.os }}"
+          GOARCH: "${{ matrix.arch }}"
+        run: |
+          make binary
+          mkdir -p ./dist/podman-tui-release-${GOOS}_${GOARCH}/podman-tui-${VERSION}/
+          cp -p ./bin/podman-tui ./dist/podman-tui-release-${GOOS}_${GOARCH}/podman-tui-${VERSION}
+
+      - uses: actions/upload-artifact@v7
+        env:
+          GOOS: "${{ matrix.os }}"
+          GOARCH: "${{ matrix.arch }}"
+        with:
+          name: podman-tui-release-${{ env.GOOS }}_${{ env.GOARCH }}
+          path: ./dist/podman-tui-release-${{ env.GOOS }}_${{ env.GOARCH }}
+
+  release:
+    needs: build
+
+    permissions:
+      contents: write
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Merge the uploaded artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: .
+          pattern: podman-tui-release-*
+          merge-multiple: true
+          skip-decompress: true
+
+      - name: Create checksum
+        run: |
+          sha256sum *.zip > sha256sum
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.ref }}
+          name: ${{ github.ref_name }}
+          files: |
+            *.zip
+            sha256sum
+
+          draft: true
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -21,9 +21,7 @@ podman-tui is using go version >= 1.20.
 
 ```shell
 $ git clone <repository>
-$ make binary # Linux
-$ make binary-win # Windows
-$ make binary-darwin # MacOS
+$ make binary
 ```
 
 ## Installing on Linux
