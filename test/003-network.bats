@@ -9,10 +9,10 @@ load helpers_tui
 @test "network connect" {
     check_skip "network_connect"
 
-    podman network rm $TEST_NETWORK_CONNECT || echo done
-    podman container rm -f $TEST_CONTAINER_NAME || echo done
-    podman container create --name $TEST_CONTAINER_NAME docker.io/library/busybox || echo done
-    podman network create $TEST_NETWORK_CONNECT || echo done
+    ${PODMAN_CMD} network rm $TEST_NETWORK_CONNECT || echo done
+    ${PODMAN_CMD} container rm -f $TEST_CONTAINER_NAME || echo done
+    ${PODMAN_CMD} container create --name $TEST_CONTAINER_NAME docker.io/library/busybox || echo done
+    ${PODMAN_CMD} network create $TEST_NETWORK_CONNECT || echo done
     # switch to networks view
     # select connect command from network commands dialog
     # select container
@@ -29,7 +29,7 @@ load helpers_tui
 
     sleep $TEST_TIMEOUT_LOW
 
-    run_helper podman container inspect $TEST_CONTAINER_NAME  --format "\"{{ .NetworkSettings.Networks.$TEST_NETWORK_CONNECT }}\""
+    run_helper ${PODMAN_CMD} container inspect $TEST_CONTAINER_NAME  --format "\"{{ .NetworkSettings.Networks.$TEST_NETWORK_CONNECT }}\""
     assert "$output" =~ "$TEST_NETWORK_CONNECT_ALIAS" "expected $TEST_NETWORK_CONNECT_ALIAS to be in the list of aliases"
 
 }
@@ -48,7 +48,7 @@ load helpers_tui
     sleep $TEST_TIMEOUT_LOW
     podman_tui_send_inputs "Tab" "Tab" "Enter"
 
-    run_helper podman container inspect $TEST_CONTAINER_NAME  --format "{{ .NetworkSettings.Networks.$TEST_NETWORK_CONNECT }}"
+    run_helper ${PODMAN_CMD} container inspect $TEST_CONTAINER_NAME  --format "{{ .NetworkSettings.Networks.$TEST_NETWORK_CONNECT }}"
     assert "$output" == "<no value>" "expected $TEST_NETWORK_CONNECT_ALIAS to be removed from container"
 
 }
@@ -56,7 +56,7 @@ load helpers_tui
 @test "network create" {
     check_skip "network_create"
 
-    podman network rm $TEST_NETWORK_NAME || echo done
+    ${PODMAN_CMD} network rm $TEST_NETWORK_NAME || echo done
 
     # switch to networks view
     # select create command from network commands dialog
@@ -71,7 +71,7 @@ load helpers_tui
     sleep $TEST_TIMEOUT_LOW
     podman_tui_send_inputs "Tab" "Enter"
     sleep $TEST_TIMEOUT_LOW
-    run_helper podman network ls --format "{{ .Name }}" --filter "name=${TEST_NETWORK_NAME}$"
+    run_helper ${PODMAN_CMD} network ls --format "{{ .Name }}" --filter "name=${TEST_NETWORK_NAME}$"
     assert "$output" == "$TEST_NETWORK_NAME" "expected $TEST_NETWORK_NAME to be in the list"
 }
 
@@ -105,7 +105,7 @@ load helpers_tui
     podman_tui_send_inputs "Enter"
     sleep $TEST_TIMEOUT_LOW
 
-    run_helper podman network ls --format "{{ .Name }}" --filter "name=${TEST_NETWORK_NAME}$"
+    run_helper ${PODMAN_CMD} network ls --format "{{ .Name }}" --filter "name=${TEST_NETWORK_NAME}$"
     assert "$output" == "" "expected $TEST_NETWORK_NAME removed"
 
 }
@@ -113,7 +113,7 @@ load helpers_tui
 @test "network prune" {
     check_skip "network_prune"
 
-    run_helper podman network create $TEST_NETWORK_NAME
+    run_helper ${PODMAN_CMD} network create $TEST_NETWORK_NAME
 
     # switch to networks view
     # select prune command from network commands dialog
@@ -123,6 +123,6 @@ load helpers_tui
     podman_tui_send_inputs "Enter"
     sleep $TEST_TIMEOUT_LOW
 
-    run_helper podman network ls --format "{{ .Name }}" --filter "name=${TEST_NETWORK_NAME}$"
+    run_helper ${PODMAN_CMD} network ls --format "{{ .Name }}" --filter "name=${TEST_NETWORK_NAME}$"
     assert "$output" == "" "expected at least $TEST_NETWORK_NAME network removal"
 }

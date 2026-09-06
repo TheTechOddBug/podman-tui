@@ -10,7 +10,7 @@ load helpers_tui
 @test "image search and pull" {
     check_skip "image_search"
 
-    podman image rm busybox || echo done
+    ${PODMAN_CMD} image rm busybox || echo done
 
     # switch to images view
     # select pull/search command from images commands dialog
@@ -22,17 +22,17 @@ load helpers_tui
     podman_tui_select_image_cmd "pull"
     podman_tui_send_inputs "busybox" "Enter"
     sleep $TEST_TIMEOUT_HIGH
-    podman_tui_send_inputs "Down" "Enter"
+    podman_tui_send_inputs "Enter"
     sleep $TEST_TIMEOUT_HIGH
 
-    run_helper podman image ls busybox --format "{{ .Repository }}"
-    assert "$output" =~ "docker.io/library/busybox" "expected image"
+    run_helper ${PODMAN_CMD} image ls busybox --format "{{ .Repository }}"
+    assert "$output" =~ "${TEST_BUSYBOX_IMAGE}" "expected image"
 }
 
 @test "image save" {
     check_skip "image_save"
 
-    podman image pull docker.io/library/busybox || echo done
+    ${PODMAN_CMD} image pull ${TEST_BUSYBOX_IMAGE} || echo done
     [ -f "${TEST_IMAGE_SAVE_PATH}" ] && /bin/rm -rf $TEST_IMAGE_SAVE_PATH
 
     # switch to images view
@@ -59,7 +59,7 @@ load helpers_tui
     check_skip "image_import"
 
     /bin/rm -rf ${TEST_IMAGE_SAVE_PATH} || echo done
-    podman image save -o ${TEST_IMAGE_SAVE_PATH} busybox:latest || echo done
+    ${PODMAN_CMD} image save -o ${TEST_IMAGE_SAVE_PATH} busybox:latest || echo done
     # switch to images view
     # select import command from images commands dialog
     # fillout import path field
@@ -77,15 +77,15 @@ load helpers_tui
     podman_tui_send_inputs "Tab" "Tab" "Enter"
     sleep $TEST_TIMEOUT_MEDIUM
 
-    run_helper podman image ls ${TEST_NAME}_image_imported --format "{{ .Repository }}:{{ .Tag }}"
+    run_helper ${PODMAN_CMD} image ls ${TEST_NAME}_image_imported --format "{{ .Repository }}:{{ .Tag }}"
     assert "$output" =~ "localhost/${TEST_NAME}_image_imported" "expected image"
 }
 
 @test "image build" {
     check_skip "image_build"
 
-    podman image pull docker.io/library/busybox || echo done
-    podman image rm ${TEST_IMAGE_BUILD_REPOSITORY}/${TEST_IMAGE_BUILD_CONTEXT_DIR} || echo done
+    ${PODMAN_CMD} image pull ${TEST_BUSYBOX_IMAGE} || echo done
+    ${PODMAN_CMD} image rm ${TEST_IMAGE_BUILD_REPOSITORY}/${TEST_IMAGE_BUILD_CONTEXT_DIR} || echo done
 
     # switch to images view
     # select build command from images commands dialog
@@ -106,7 +106,7 @@ load helpers_tui
     sleep $TEST_TIMEOUT_MEDIUM
     podman_tui_send_inputs "Tab" "Enter"
 
-    run_helper podman image ls ${TEST_IMAGE_BUILD_TAG} --format "{{ .Repository }}:{{ .Tag }}"
+    run_helper ${PODMAN_CMD} image ls ${TEST_IMAGE_BUILD_TAG} --format "{{ .Repository }}:{{ .Tag }}"
     assert "$output" =~ "${TEST_IMAGE_BUILD_REPOSITORY}/${TEST_IMAGE_BUILD_TAG}" "expected image"
 }
 
@@ -118,7 +118,7 @@ load helpers_tui
     # select diff command from image commands dialog
     # close busybox image diff result message dialog
     podman_tui_set_view "images"
-    podman_tui_select_item 2
+    podman_tui_select_item 0
     podman_tui_select_image_cmd "diff"
     sleep $TEST_TIMEOUT_LOW
     podman_tui_send_inputs "Tab" "Enter"
@@ -135,7 +135,7 @@ load helpers_tui
     # select history command from image commands dialog
     # close busybox image history result message dialog
     podman_tui_set_view "images"
-    podman_tui_select_item 2
+    podman_tui_select_item 0
     podman_tui_select_image_cmd "history"
     sleep $TEST_TIMEOUT_LOW
     podman_tui_send_inputs "Tab" "Enter"
@@ -147,20 +147,20 @@ load helpers_tui
 @test "image inspect" {
     check_skip "image_inspect"
 
-    image_id=$(podman image ls --sort repository --noheading | nl -v 0 | grep 'busybox ' | awk '{print $4}')
+    image_id=$(${PODMAN_CMD} image ls --sort repository --noheading | nl -v 0 | grep 'busybox ' | awk '{print $4}')
 
     # switch to images view
     # select busybox image from list
     # select inspect command from image commands dialog
     # close busybox image inspect result message dialog
     podman_tui_set_view "images"
-    podman_tui_select_item 2
+    podman_tui_select_item 0
     podman_tui_select_image_cmd "inspect"
     sleep $TEST_TIMEOUT_LOW
     podman_tui_send_inputs "Enter"
 
     run_helper sed -n '/  "RepoTags": \[/, /  \],/p' $PODMAN_TUI_LOG
-    assert "$output" =~ "docker.io/library/busybox:latest" "expected RepoTag: [\"docker.io/library/busybox:latest\"] in the logs"
+    assert "$output" =~ "${TEST_BUSYBOX_IMAGE}:latest" "expected RepoTag: [\"${TEST_BUSYBOX_IMAGE}:latest\"] in the logs"
 }
 
 @test "image tag" {
@@ -170,12 +170,12 @@ load helpers_tui
     # select busybox image from list
     # select tag command from image commands dialog
     podman_tui_set_view "images"
-    podman_tui_select_item 2
+    podman_tui_select_item 0
     podman_tui_select_image_cmd "tag"
     podman_tui_send_inputs "$TEST_IMAGE_TAG_NAME" "Tab" "Tab" "Enter"
     sleep $TEST_TIMEOUT_LOW
 
-    run_helper podman image ls $TEST_IMAGE_TAG_NAME --format "{{ .Repository }}"
+    run_helper ${PODMAN_CMD} image ls $TEST_IMAGE_TAG_NAME --format "{{ .Repository }}"
     assert "$output" =~ "$TEST_IMAGE_TAG_NAME" "expected tagged image $TEST_IMAGE_TAG_NAME"
 }
 
@@ -187,13 +187,13 @@ load helpers_tui
     # select untag command from image commands dialog
     # press "Tab" 2 times and "Enter" to untag busybox image
     podman_tui_set_view "images"
-    podman_tui_select_item 2
+    podman_tui_select_item 1
     sleep $TEST_TIMEOUT_LOW
     podman_tui_select_image_cmd "untag"
     podman_tui_send_inputs "Tab" "Tab" "Enter"
     sleep $TEST_TIMEOUT_LOW
 
-    untagged_umage=$(podman image ls --format '{{ .Repository }}')
+    untagged_umage=$(${PODMAN_CMD} image ls --format '{{ .Repository }}')
     assert "$untagged_umage" !~ "$TEST_IMAGE_TAG_NAME" "expected $TEST_IMAGE_TAG_NAME not to be in the list"
 
 }
@@ -201,7 +201,7 @@ load helpers_tui
 @test "image remove" {
     check_skip "image_remove"
 
-    run_helper podman image ls  --format "'{{ .Repository }}'"
+    run_helper ${PODMAN_CMD} image ls  --format "'{{ .Repository }}'"
     before="$output"
 
     # switch to images view
@@ -211,21 +211,21 @@ load helpers_tui
     # wait for image removal operation
     # close image removal result message dialog
     podman_tui_set_view "images"
-    podman_tui_select_item 2
+    podman_tui_select_item 0
     podman_tui_select_image_cmd "remove"
     podman_tui_send_inputs "Enter"
     sleep $TEST_TIMEOUT_LOW
     podman_tui_send_inputs "Tab" "Enter"
 
     # check if busybox image has been removed
-    run_helper podman image ls --format "{{ .Repository }}"
+    run_helper ${PODMAN_CMD} image ls --format "{{ .Repository }}"
     assert "$output" !~ "$before" "expected <none> image removal"
 }
 
 @test "image prune" {
     check_skip "image_prune"
 
-    podman image pull busybox
+    ${PODMAN_CMD} image pull busybox
 
     # switch to images view
     # select prune command from image commands dialog
@@ -236,6 +236,6 @@ load helpers_tui
     sleep $TEST_TIMEOUT_LOW
 
     # check if busybox image has been removed
-    run_helper podman image ls --format "{{ .Repository }}" --filter "reference=busybox"
+    run_helper ${PODMAN_CMD} image ls --format "{{ .Repository }}" --filter "reference=busybox"
     assert "$output" == "" "expected at least busybox image removal"
 }
