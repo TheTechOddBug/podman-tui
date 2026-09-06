@@ -18,7 +18,7 @@ require (
 	github.com/spf13/cobra v1.10.2
 	go.podman.io/buildah v1.45.0
 	go.podman.io/common v0.69.1
-	go.podman.io/podman/v6 v6.1.0
+	go.podman.io/podman/v6 v6.1.1
 	go.podman.io/storage v1.64.0
 	golang.org/x/crypto v0.55.0
 )
