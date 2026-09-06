@@ -9,7 +9,7 @@ load helpers_tui
 @test "volume create" {
     check_skip "volume_create"
 
-    podman volume rm $TEST_VOLUME_NAME || echo done
+    ${PODMAN_CMD} volume rm $TEST_VOLUME_NAME || echo done
 
     # switch to volumes view
     # select create command from volume commands dialog
@@ -25,21 +25,21 @@ load helpers_tui
     podman_tui_send_inputs "Tab" "Tab" "Enter"
     sleep $TEST_TIMEOUT_LOW
 
-    run_helper podman volume ls --format "{{ .Name }}" --filter "name=${TEST_VOLUME_NAME}"
+    run_helper ${PODMAN_CMD} volume ls --format "{{ .Name }}" --filter "name=${TEST_VOLUME_NAME}"
     assert "$output" == "$TEST_VOLUME_NAME" "expected $TEST_VOLUME_NAME to be in the list"
 
-    run_helper podman volume inspect ${TEST_VOLUME_NAME} -f "{{ .UID }}"
+    run_helper ${PODMAN_CMD} volume inspect ${TEST_VOLUME_NAME} -f "{{ .UID }}"
     assert "$output" == "$TEST_VOLUME_UID" "expected UID to be $TEST_VOLUME_UID"
 
-    run_helper podman volume inspect ${TEST_VOLUME_NAME} -f "{{ .GID }}"
+    run_helper ${PODMAN_CMD} volume inspect ${TEST_VOLUME_NAME} -f "{{ .GID }}"
     assert "$output" == "$TEST_VOLUME_GID" "expected GID to be $TEST_VOLUME_GID"
 }
 
 @test "volume export" {
     check_skip "volume_export"
 
-    podman volume rm $TEST_VOLUME_NAME || echo done
-    podman volume create $TEST_VOLUME_NAME --label "$TEST_LABEL" || echo done
+    podman ${PODMAN_CMD} rm $TEST_VOLUME_NAME || echo done
+    podman ${PODMAN_CMD} create $TEST_VOLUME_NAME --label "$TEST_LABEL" || echo done
     /bin/rm -rf /tmp/${TEST_VOLUME_NAME}.tar || echo done
 
     # switch to volumes view
@@ -60,8 +60,8 @@ load helpers_tui
 @test "volume import" {
     check_skip "volume_import"
 
-    podman volume rm $TEST_VOLUME_NAME || echo done
-    podman volume create $TEST_VOLUME_NAME --label "$TEST_LABEL" || echo done
+    podman ${PODMAN_CMD} rm $TEST_VOLUME_NAME || echo done
+    podman ${PODMAN_CMD} create $TEST_VOLUME_NAME --label "$TEST_LABEL" || echo done
     /bin/rm -rf /tmp/${TEST_VOLUME_NAME}.tar || echo done
 
     [ -d "/tmp/${TEST_VOLUME_NAME}/" ] && /bin/rm -rf /tmp/${TEST_VOLUME_NAME}/
@@ -80,10 +80,9 @@ load helpers_tui
     podman_tui_send_inputs "Tab" "Enter"
     sleep $TEST_TIMEOUT_LOW
 
-    mount_point=$(podman volume inspect ${TEST_VOLUME_NAME} -f "{{ .Mountpoint }}")
-    run_helper ls ${mount_point}/tmp/${TEST_VOLUME_NAME}/a_import.txt
+    run_helper ${PODMAN_CMD} run --rm -v ${TEST_VOLUME_NAME}:/data:ro ${TEST_BUSYBOX_IMAGE} ls /data/tmp/${TEST_VOLUME_NAME}/
 
-    assert "$output" == "${mount_point}/tmp/${TEST_VOLUME_NAME}/a_import.txt" "expected a_import.txt to exist"
+    assert "$output" =~ "a_import.txt" "expected a_import.txt to exist"
 }
 
 @test "volume inspect" {
@@ -116,7 +115,7 @@ load helpers_tui
     podman_tui_send_inputs "Enter"
     sleep $TEST_TIMEOUT_LOW
 
-    run_helper podman volume ls --format "{{ .Name }}" --filter "name=${TEST_VOLUME_NAME}"
+    run_helper ${PODMAN_CMD} volume ls --format "{{ .Name }}" --filter "name=${TEST_VOLUME_NAME}"
     assert "$output" == "" "expected $TEST_VOLUME_NAME removed"
 
 }
@@ -124,7 +123,7 @@ load helpers_tui
 @test "volume prune" {
     check_skip "volume_prune"
 
-    run_helper podman volume create $TEST_VOLUME_NAME
+    run_helper ${PODMAN_CMD} volume create $TEST_VOLUME_NAME
 
     # switch to volumes view
     # select prune volume from volume commands dialog
@@ -134,6 +133,6 @@ load helpers_tui
     podman_tui_send_inputs "Enter"
     sleep $TEST_TIMEOUT_LOW
 
-    run_helper podman volume ls --format "{{ .Name }}" --filter "name=${TEST_NETWORK_NAME}"
+    run_helper ${PODMAN_CMD} volume ls --format "{{ .Name }}" --filter "name=${TEST_VOLUME_NAME}"
     assert "$output" =~ "" "expected at least $TEST_VOLUME_NAME image removal"
 }

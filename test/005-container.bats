@@ -9,11 +9,11 @@ load helpers_tui
 @test "container run" {
     check_skip "container_run"
 
-    podman container rm -f $TEST_CONTAINER_NAME || echo done
+    ${PODMAN_CMD} container rm -f $TEST_CONTAINER_NAME || echo done
 
-    buysbox_image=$(podman image ls --sort repository --format "{{ .Repository }}" --filter "reference=docker.io/library/busybox")
+    buysbox_image=$(${PODMAN_CMD} image ls --sort repository --format "{{ .Repository }}" --filter "reference=${TEST_BUSYBOX_IMAGE}")
     if [ "${buysbox_image}" == "" ] ; then
-        podman image pull docker.io/library/busybox
+        ${PODMAN_CMD} image pull ${TEST_BUSYBOX_IMAGE}
     fi
 
     podman_tui_set_view "containers"
@@ -30,23 +30,23 @@ load helpers_tui
     podman_tui_send_inputs "Tab" "Tab" "Tab" "Enter"
     sleep $TEST_TIMEOUT_HIGH
 
-    cnt_status=$(podman container inspect $TEST_CONTAINER_NAME --format "{{ json .State.Status }}")
+    cnt_status=$(${PODMAN_CMD} container inspect $TEST_CONTAINER_NAME --format "{{ json .State.Status }}")
     assert "$cnt_status" =~ "running" "expected container status to match: running"
 
-    podman container stop $TEST_CONTAINER_NAME
+    ${PODMAN_CMD} container stop $TEST_CONTAINER_NAME
 
-    run_helper podman container ls --all --filter "name=${TEST_CONTAINER_NAME}$" --noheading
+    run_helper ${PODMAN_CMD} container ls --all --filter "name=${TEST_CONTAINER_NAME}$" --noheading
     assert "$output" == "" "expected $TEST_CONTAINER_NAME to be removed"
 }
 
 @test "container create (privileged, timeout, remove)" {
     check_skip "container_create_remove"
 
-    podman container rm -f $TEST_CONTAINER_NAME || echo done
+    ${PODMAN_CMD} container rm -f $TEST_CONTAINER_NAME || echo done
 
-    buysbox_image=$(podman image ls --sort repository --format "{{ .Repository }}" --filter "reference=docker.io/library/busybox")
+    buysbox_image=$(${PODMAN_CMD} image ls --sort repository --format "{{ .Repository }}" --filter "reference=${TEST_BUSYBOX_IMAGE}")
     if [ "${buysbox_image}" == "" ] ; then
-        podman image pull docker.io/library/busybox
+        ${PODMAN_CMD} image pull ${TEST_BUSYBOX_IMAGE}
     fi
 
     # switch to containers view
@@ -68,9 +68,9 @@ load helpers_tui
     podman_tui_send_inputs "Enter"
     sleep $TEST_TIMEOUT_LOW
 
-    cnt_status=$(podman container inspect $TEST_CONTAINER_NAME --format "{{ json .State.Status }}")
-    cnt_annotations=$(podman container inspect $TEST_CONTAINER_NAME --format "{{ json .Config.Annotations }}")
-    cnt_timeout=$(podman container inspect $TEST_CONTAINER_NAME --format "{{ json .Config.Timeout }}")
+    cnt_status=$(${PODMAN_CMD} container inspect $TEST_CONTAINER_NAME --format "{{ json .State.Status }}")
+    cnt_annotations=$(${PODMAN_CMD} container inspect $TEST_CONTAINER_NAME --format "{{ json .Config.Annotations }}")
+    cnt_timeout=$(${PODMAN_CMD} container inspect $TEST_CONTAINER_NAME --format "{{ json .Config.Timeout }}")
 
     assert "$cnt_status" =~ "created" "expected container status to match: created"
     assert "$cnt_annotations" =~ '"io.podman.annotations.autoremove":"TRUE"' "expected container annotations to include: io.podman.annotations.autoremove:TRUE"
@@ -81,11 +81,11 @@ load helpers_tui
 @test "container create (environment)" {
     check_skip "container_create_environment"
 
-    podman container rm -f $TEST_CONTAINER_NAME || echo done
+    ${PODMAN_CMD} container rm -f $TEST_CONTAINER_NAME || echo done
 
-    buysbox_image=$(podman image ls --sort repository --format "{{ .Repository }}" --filter "reference=docker.io/library/busybox")
+    buysbox_image=$(${PODMAN_CMD} image ls --sort repository --format "{{ .Repository }}" --filter "reference=${TEST_BUSYBOX_IMAGE}")
     if [ "${buysbox_image}" == "" ] ; then
-        podman image pull docker.io/library/busybox
+        ${PODMAN_CMD} image pull ${TEST_BUSYBOX_IMAGE}
     fi
 
     # switch to containers view
@@ -112,9 +112,9 @@ load helpers_tui
     podman_tui_send_inputs "Enter"
     sleep $TEST_TIMEOUT_LOW
 
-    cnt_workdir=$(podman container inspect $TEST_CONTAINER_NAME --format "{{ json .Config.WorkingDir }}")
-    cnt_vars=$(podman container inspect $TEST_CONTAINER_NAME --format "{{ json .Config.Env }}")
-    cnt_umask=$(podman container inspect $TEST_CONTAINER_NAME --format "{{ json .Config.Umask }}")
+    cnt_workdir=$(${PODMAN_CMD} container inspect $TEST_CONTAINER_NAME --format "{{ json .Config.WorkingDir }}")
+    cnt_vars=$(${PODMAN_CMD} container inspect $TEST_CONTAINER_NAME --format "{{ json .Config.Env }}")
+    cnt_umask=$(${PODMAN_CMD} container inspect $TEST_CONTAINER_NAME --format "{{ json .Config.Umask }}")
 
     assert "$cnt_workdir" =~ "$TEST_CONTAINER_WORKDIR" "expected container work dir to match: $TEST_CONTAINER_WORKDIR"
     assert "$cnt_umask" =~ "$TEST_CONTAINER_UMASK" "expected container umask to match: $TEST_CONTAINER_UMASK"
@@ -125,11 +125,11 @@ load helpers_tui
 @test "container create (resource)" {
     check_skip "container_create_resource"
 
-    podman container rm -f $TEST_CONTAINER_NAME || echo done
+    ${PODMAN_CMD} container rm -f $TEST_CONTAINER_NAME || echo done
 
-    buysbox_image=$(podman image ls --sort repository --format "{{ .Repository }}" --filter "reference=docker.io/library/busybox")
+    buysbox_image=$(${PODMAN_CMD} image ls --sort repository --format "{{ .Repository }}" --filter "reference=${TEST_BUSYBOX_IMAGE}")
     if [ "${buysbox_image}" == "" ] ; then
-        podman image pull docker.io/library/busybox
+        ${PODMAN_CMD} image pull ${TEST_BUSYBOX_IMAGE}
     fi
 
     # switch to containers view
@@ -160,14 +160,14 @@ load helpers_tui
     podman_tui_send_inputs "Enter"
     sleep $TEST_TIMEOUT_LOW
 
-    cnt_memory=$(podman container inspect $TEST_CONTAINER_NAME --format "{{ json .HostConfig.Memory }}")
-    cnt_memory_reserv=$(podman container inspect $TEST_CONTAINER_NAME --format "{{ json .HostConfig.MemoryReservation }}")
-    cnt_memory_swap=$(podman container inspect $TEST_CONTAINER_NAME --format "{{ json .HostConfig.MemorySwap }}")
-    cnt_memory_swappiness=$(podman container inspect $TEST_CONTAINER_NAME --format "{{ json .HostConfig.MemorySwappiness }}")
-    cnt_cpu_shares=$(podman container inspect $TEST_CONTAINER_NAME --format "{{ json .HostConfig.CpuShares }}")
-    cnt_cpu_period=$(podman container inspect $TEST_CONTAINER_NAME --format "{{ json .HostConfig.CpuPeriod }}")
-    cnt_cpu_quota=$(podman container inspect $TEST_CONTAINER_NAME --format "{{ json .HostConfig.CpuQuota }}")
-    cnt_shm_size=$(podman container inspect $TEST_CONTAINER_NAME --format "{{ json .HostConfig.ShmSize }}")
+    cnt_memory=$(${PODMAN_CMD} container inspect $TEST_CONTAINER_NAME --format "{{ json .HostConfig.Memory }}")
+    cnt_memory_reserv=$(${PODMAN_CMD} container inspect $TEST_CONTAINER_NAME --format "{{ json .HostConfig.MemoryReservation }}")
+    cnt_memory_swap=$(${PODMAN_CMD} container inspect $TEST_CONTAINER_NAME --format "{{ json .HostConfig.MemorySwap }}")
+    cnt_memory_swappiness=$(${PODMAN_CMD} container inspect $TEST_CONTAINER_NAME --format "{{ json .HostConfig.MemorySwappiness }}")
+    cnt_cpu_shares=$(${PODMAN_CMD} container inspect $TEST_CONTAINER_NAME --format "{{ json .HostConfig.CpuShares }}")
+    cnt_cpu_period=$(${PODMAN_CMD} container inspect $TEST_CONTAINER_NAME --format "{{ json .HostConfig.CpuPeriod }}")
+    cnt_cpu_quota=$(${PODMAN_CMD} container inspect $TEST_CONTAINER_NAME --format "{{ json .HostConfig.CpuQuota }}")
+    cnt_shm_size=$(${PODMAN_CMD} container inspect $TEST_CONTAINER_NAME --format "{{ json .HostConfig.ShmSize }}")
 
     assert "$cnt_memory" =~ "$TEST_CONTAINER_MEMORY" "expected container memory to match: $TEST_CONTAINER_MEMORY"
     assert "$cnt_memory_reserv" =~ "$TEST_CONTAINER_MEMORY_RESERV" "expected container memory reservation to match: $TEST_CONTAINER_MEMORY_RESERV"
@@ -182,22 +182,22 @@ load helpers_tui
 @test "container create (pod, network, volume, security options, health)" {
     check_skip "container_create_health"
 
-    httpd_image=$(podman image ls --sort repository --format "{{ .Repository }}" --filter "reference=docker.io/library/httpd")
+    httpd_image=$(${PODMAN_CMD} image ls --sort repository --format "{{ .Repository }}" --filter "reference=docker.io/library/httpd")
     if [ "${httpd_image}" == "" ] ; then
-        podman image pull docker.io/library/httpd
+        ${PODMAN_CMD} image pull docker.io/library/httpd
     fi
 
-    podman pod rm -f $TEST_CONTAINER_POD_NAME || echo done
-    podman container rm -f $TEST_CONTAINER_NAME || echo done
-    podman container rm -f ${TEST_CONTAINER_NAME}_renamed || echo done
-    podman network rm $TEST_CONTAINER_NETWORK_NAME || echo done
-    podman volume rm $TEST_CONTAINER_VOLUME_NAME || echo done
+    ${PODMAN_CMD} pod rm -f $TEST_CONTAINER_POD_NAME || echo done
+    ${PODMAN_CMD} container rm -f $TEST_CONTAINER_NAME || echo done
+    ${PODMAN_CMD} container rm -f ${TEST_CONTAINER_NAME}_renamed || echo done
+    ${PODMAN_CMD} network rm $TEST_CONTAINER_NETWORK_NAME || echo done
+    ${PODMAN_CMD} volume rm $TEST_CONTAINER_VOLUME_NAME || echo done
 
-    [ ! -d "${TEST_CONTAINER_MOUNT_SOURCE}" ] && mkdir $TEST_CONTAINER_MOUNT_SOURCE
+    #[ ! -d "${TEST_CONTAINER_MOUNT_SOURCE}" ] && mkdir $TEST_CONTAINER_MOUNT_SOURCE
 
-    podman network create $TEST_CONTAINER_NETWORK_NAME || echo done
-    podman volume create $TEST_CONTAINER_VOLUME_NAME || echo done
-    podman pod create --name $TEST_CONTAINER_POD_NAME --network $TEST_CONTAINER_NETWORK_NAME --publish $TEST_CONTAINER_PORT || echo done
+    ${PODMAN_CMD} network create $TEST_CONTAINER_NETWORK_NAME || echo done
+    ${PODMAN_CMD} volume create $TEST_CONTAINER_VOLUME_NAME || echo done
+    ${PODMAN_CMD} pod create --name $TEST_CONTAINER_POD_NAME --network $TEST_CONTAINER_NETWORK_NAME --publish $TEST_CONTAINER_PORT || echo done
     sleep $TEST_TIMEOUT_LOW
 
     # switch to containers view
@@ -251,7 +251,7 @@ load helpers_tui
     sleep $TEST_TIMEOUT_LOW
 
     # get created container information
-    container_information=$(podman container ls --all --pod --filter "name=${TEST_CONTAINER_NAME}$" --format \
+    container_information=$(${PODMAN_CMD} container ls --all --pod --filter "name=${TEST_CONTAINER_NAME}$" --format \
     "{{ json .PodName }}|{{ json .Mounts }}|{{ json .Image }}|{{ json .Ports }}|{{ json .Labels }}")
 
     cnt_pod_name=$(echo $container_information | awk -F '|' '{print $1}')
@@ -264,11 +264,11 @@ load helpers_tui
     cnt_port=$(echo $TEST_CONTAINER_PORT | awk -F: '{print $2}')
     cnt_port_str="$host_port->$cnt_port/tcp"
 
-    cnt_security_opt=$(podman container inspect ${TEST_CONTAINER_NAME} --format "{{ json .HostConfig.SecurityOpt }}")
+    cnt_security_opt=$(${PODMAN_CMD} container inspect ${TEST_CONTAINER_NAME} --format "{{ json .HostConfig.SecurityOpt }}")
 
-    cnt_healthcheck_interval=$(podman container inspect ${TEST_CONTAINER_NAME} --format "{{ json .Config.Healthcheck.Interval }}")
-    cnt_healthcheck_timeout=$(podman container inspect ${TEST_CONTAINER_NAME} --format "{{ json .Config.Healthcheck.Timeout }}")
-    cnt_healthcheck_retires=$(podman container inspect ${TEST_CONTAINER_NAME} --format "{{ json .Config.Healthcheck.Retries }}")
+    cnt_healthcheck_interval=$(${PODMAN_CMD} container inspect ${TEST_CONTAINER_NAME} --format "{{ json .Config.Healthcheck.Interval }}")
+    cnt_healthcheck_timeout=$(${PODMAN_CMD} container inspect ${TEST_CONTAINER_NAME} --format "{{ json .Config.Healthcheck.Timeout }}")
+    cnt_healthcheck_retires=$(${PODMAN_CMD} container inspect ${TEST_CONTAINER_NAME} --format "{{ json .Config.Healthcheck.Retries }}")
     cnt_hltcheck_interval="$(echo $TEST_CONTAINER_HEALTH_INTERVAL | sed 's/s//')000000000"
     cnt_gltcheck_timeout="$(echo $TEST_CONTAINER_HEALTH_TIMEOUT | sed 's/s//')000000000"
 
@@ -305,7 +305,7 @@ load helpers_tui
     podman_tui_send_inputs Tab Tab Tab Tab
     podman_tui_send_inputs Enter
     sleep $TEST_TIMEOUT_HIGH
-    run_helper podman image ls ${TEST_CONTAINER_COMMIT_IMAGE_NAME} --format "{{ .Repository }}"
+    run_helper ${PODMAN_CMD} image ls ${TEST_CONTAINER_COMMIT_IMAGE_NAME} --format "{{ .Repository }}"
     assert "$output" =~ "localhost/${TEST_CONTAINER_COMMIT_IMAGE_NAME}" "expected image"
 }
 
@@ -320,7 +320,7 @@ load helpers_tui
     podman_tui_select_container_cmd "start"
     sleep $TEST_TIMEOUT_LOW
 
-    run_helper podman container ls --all --filter="name=${TEST_CONTAINER_NAME}$" --format "{{ .Status }}"
+    run_helper ${PODMAN_CMD} container ls --all --filter="name=${TEST_CONTAINER_NAME}$" --format "{{ .Status }}"
     assert "$output" =~ "Up" "expected $TEST_CONTAINER_NAME to be up"
 
 }
@@ -328,8 +328,8 @@ load helpers_tui
 @test "container checkpoint" {
     check_skip "container_checkpoint"
 
-    podman container create --name ${TEST_CONTAINER_CHECKPOINT_NAME} docker.io/library/httpd
-    podman container start ${TEST_CONTAINER_CHECKPOINT_NAME}
+    ${PODMAN_CMD} container create --name ${TEST_CONTAINER_CHECKPOINT_NAME} docker.io/library/httpd
+    ${PODMAN_CMD} container start ${TEST_CONTAINER_CHECKPOINT_NAME}
     # switch to containers view
     # select test container from list
     # select checkpoint command from container commands dialog
@@ -372,7 +372,7 @@ load helpers_tui
     podman_tui_send_inputs "Tab" "Tab" "Enter"
 
     sleep $TEST_TIMEOUT_HIGH
-    run_helper podman container ls --all --format "{{ .Names }}"
+    run_helper ${PODMAN_CMD} container ls --all --format "{{ .Names }}"
     assert "$output" =~ "${TEST_CONTAINER_CHECKPOINT_NAME}_restore" "expected container to be restored"
 }
 
@@ -400,7 +400,7 @@ load helpers_tui
     podman_tui_send_inputs "Tab" "Enter"
     sleep $TEST_TIMEOUT_LOW
 
-    run_helper podman container exec $TEST_CONTAINER_NAME cat a.txt
+    run_helper ${PODMAN_CMD} container exec $TEST_CONTAINER_NAME cat a.txt
 
     assert "$output" =~ "test" "expected container a.txt file container test keyword"
 }
@@ -462,7 +462,7 @@ load helpers_tui
     podman_tui_select_container_cmd "port"
     sleep $TEST_TIMEOUT_LOW
 
-    container_ports=$(podman container ls --all --filter="name=${TEST_CONTAINER_NAME}$" --format "{{ .Ports }}")
+    container_ports=$(${PODMAN_CMD} container ls --all --filter="name=${TEST_CONTAINER_NAME}$" --format "{{ .Ports }}")
     run_helper grep -w "$container_ports" $PODMAN_TUI_LOG
     assert "$output" =~ "$container_ports" "expected container ports ($container_ports) in the log"
 }
@@ -478,7 +478,7 @@ load helpers_tui
     podman_tui_select_container_cmd "pause"
     sleep $TEST_TIMEOUT_LOW
 
-    run_helper podman container ls --all --filter="name=${TEST_CONTAINER_NAME}$" --format "{{ .Status }}"
+    run_helper ${PODMAN_CMD} container ls --all --filter="name=${TEST_CONTAINER_NAME}$" --format "{{ .Status }}"
     assert "$output" =~ "Paused" "expected $TEST_CONTAINER_NAME to be paused"
 }
 
@@ -493,7 +493,7 @@ load helpers_tui
     podman_tui_select_container_cmd "unpause"
     sleep $TEST_TIMEOUT_LOW
 
-    run_helper podman container ls --all --filter="name=${TEST_CONTAINER_NAME}$" --format "{{ .Status }}"
+    run_helper ${PODMAN_CMD} container ls --all --filter="name=${TEST_CONTAINER_NAME}$" --format "{{ .Status }}"
     assert "$output" =~ "Up" "expected $TEST_CONTAINER_NAME to be Up"
 }
 
@@ -508,14 +508,14 @@ load helpers_tui
     podman_tui_select_container_cmd "stop"
     sleep $TEST_TIMEOUT_LOW
 
-    run_helper podman container ls --all --filter="name=${TEST_CONTAINER_NAME}$" --format "{{ .Status }}"
+    run_helper ${PODMAN_CMD} container ls --all --filter="name=${TEST_CONTAINER_NAME}$" --format "{{ .Status }}"
     assert "$output" =~ "Exited" "expected $TEST_CONTAINER_NAME to be Up"
 }
 
 @test "container kill" {
     check_skip "container_kill"
 
-    podman container start $TEST_CONTAINER_NAME || echo done
+    ${PODMAN_CMD} container start $TEST_CONTAINER_NAME || echo done
     # switch to containers view
     # select test container from list
     # select kill command from container commands dialog
@@ -524,7 +524,7 @@ load helpers_tui
     podman_tui_select_container_cmd "kill"
     sleep $TEST_TIMEOUT_LOW
 
-    run_helper podman container ls --all --filter="name=${TEST_CONTAINER_NAME}$" --format "{{ .Status }}"
+    run_helper ${PODMAN_CMD} container ls --all --filter="name=${TEST_CONTAINER_NAME}$" --format "{{ .Status }}"
     assert "$output" =~ "Exited" "expected $TEST_CONTAINER_NAME to be killed"
 }
 
@@ -540,15 +540,15 @@ load helpers_tui
     podman_tui_send_inputs "Enter"
     sleep $TEST_TIMEOUT_LOW
 
-    run_helper podman container ls --all --filter "name=${TEST_CONTAINER_NAME}$" --noheading
+    run_helper ${PODMAN_CMD} container ls --all --filter "name=${TEST_CONTAINER_NAME}$" --noheading
     assert "$output" == "" "expected $TEST_CONTAINER_NAME to be removed"
 }
 
 @test "container rename" {
     check_skip "container_rename"
 
-    podman container rm $TEST_CONTAINER_NAME || echo done
-    podman container create --name $TEST_CONTAINER_NAME httpd
+    ${PODMAN_CMD} container rm $TEST_CONTAINER_NAME || echo done
+    ${PODMAN_CMD} container create --name $TEST_CONTAINER_NAME httpd
 
     # switch to containers view
     # select test container from list
@@ -560,16 +560,16 @@ load helpers_tui
     podman_tui_send_inputs "Tab" "Tab" "Enter"
     sleep $TEST_TIMEOUT_LOW
 
-    run_helper podman container ls --all --filter "name=${TEST_CONTAINER_NAME}_renamed$" --format "{{ .Names }}"
+    run_helper ${PODMAN_CMD} container ls --all --filter "name=${TEST_CONTAINER_NAME}_renamed$" --format "{{ .Names }}"
     assert "$output" == "${TEST_CONTAINER_NAME}_renamed" "expected ${TEST_CONTAINER_NAME}_renamed to be in the list"
 }
 
 @test "container prune" {
     check_skip "container_prune"
 
-    podman container create --name $TEST_CONTAINER_NAME docker.io/library/httpd || echo done
-    podman container start $TEST_CONTAINER_NAME || echo done
-    podman container stop $TEST_CONTAINER_NAME || echo done
+    ${PODMAN_CMD} container create --name $TEST_CONTAINER_NAME docker.io/library/httpd || echo done
+    ${PODMAN_CMD} container start $TEST_CONTAINER_NAME || echo done
+    ${PODMAN_CMD} container stop $TEST_CONTAINER_NAME || echo done
 
     # switch to containers view
     # select test container from list
@@ -580,6 +580,6 @@ load helpers_tui
     podman_tui_send_inputs "Enter"
     sleep $TEST_TIMEOUT_MEDIUM
 
-    run_helper podman container ls --all --filter "name=${TEST_CONTAINER_NAME}$" --noheading
+    run_helper ${PODMAN_CMD} container ls --all --filter "name=${TEST_CONTAINER_NAME}$" --noheading
     assert "$output" == "" "expected $TEST_CONTAINER_NAME to be removed"
 }

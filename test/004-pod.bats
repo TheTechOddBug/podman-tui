@@ -9,8 +9,8 @@ load helpers_tui
 @test "pod create (resource)" {
     check_skip "pod_create_resource"
 
-    podman pod rm -f $TEST_POD_NAME || echo done
-    podman image pull pause:3.5 || echo done
+    ${PODMAN_CMD} pod rm -f $TEST_POD_NAME || echo done
+    ${PODMAN_CMD} image pull pause:3.5 || echo done
 
     podman_tui_set_view "pods"
     podman_tui_select_pod_cmd "create"
@@ -25,13 +25,13 @@ load helpers_tui
     podman_tui_send_inputs "Enter"
     sleep $TEST_TIMEOUT_LOW
 
-    run_helper podman pod ls --filter="name=${TEST_POD_NAME}$" --format "{{ .Status}}"
+    run_helper ${PODMAN_CMD} pod ls --filter="name=${TEST_POD_NAME}$" --format "{{ .Status}}"
     assert $output =~ "Created" "expected $TEST_POD_NAME to be created"
 
-    pod_memory=$(podman pod inspect $TEST_POD_NAME --format "{{ json .MemoryLimit }}")
-    pod_memory_swap=$(podman pod inspect $TEST_POD_NAME --format "{{ json .MemorySwap }}")
-    pod_cpu_shares=$(podman pod inspect $TEST_POD_NAME --format "{{ json .CPUShares }}")
-    pod_cpu_set_mems=$(podman pod inspect $TEST_POD_NAME --format "{{ json .CPUSetMems }}")
+    pod_memory=$(${PODMAN_CMD} pod inspect $TEST_POD_NAME --format "{{ json .MemoryLimit }}")
+    pod_memory_swap=$(${PODMAN_CMD} pod inspect $TEST_POD_NAME --format "{{ json .MemorySwap }}")
+    pod_cpu_shares=$(${PODMAN_CMD} pod inspect $TEST_POD_NAME --format "{{ json .CPUShares }}")
+    pod_cpu_set_mems=$(${PODMAN_CMD} pod inspect $TEST_POD_NAME --format "{{ json .CPUSetMems }}")
 
     assert "$pod_memory" =~ "$TEST_POD_MEMORY" "expected pod memory to match: $TEST_POD_MEMORY"
     assert "$pod_memory_swap" =~ "$TEST_POD_SWAP" "expected pod memory swap to match: $TEST_POD_SWAP"
@@ -42,10 +42,10 @@ load helpers_tui
 @test "pod create (networking, security)" {
     check_skip "pod_create_networking"
 
-    podman pod rm -f $TEST_POD_NAME || echo done
-    podman network rm $TEST_POD_NETWORK_NAME || echo done
-    podman image pull pause:3.5 || echo done
-    podman network create $TEST_POD_NETWORK_NAME || echo done
+    ${PODMAN_CMD} pod rm -f $TEST_POD_NAME || echo done
+    ${PODMAN_CMD} network rm $TEST_POD_NETWORK_NAME || echo done
+    ${PODMAN_CMD} image pull pause:3.5 || echo done
+    ${PODMAN_CMD} network create $TEST_POD_NETWORK_NAME || echo done
 
     # switch to pods view
     # select create command from pod commands dialog
@@ -71,10 +71,10 @@ load helpers_tui
     podman_tui_send_inputs "Enter"
     sleep $TEST_TIMEOUT_LOW
 
-    run_helper podman pod ls --filter="name=${TEST_POD_NAME}$" --format "{{ .Status}}"
+    run_helper ${PODMAN_CMD} pod ls --filter="name=${TEST_POD_NAME}$" --format "{{ .Status}}"
     assert $output =~ "Created" "expected $TEST_POD_NAME to be created"
 
-    security_opts=$(podman pod inspect $TEST_POD_NAME | sed -n '/security_opt/,/.*]/p')
+    security_opts=$(${PODMAN_CMD} pod inspect $TEST_POD_NAME | sed -n '/security_opt/,/.*]/p')
     assert "$security_opts" =~ "no-new-privileges" "expected no-new-privileges in pod security options"
     assert "$security_opts" =~ "label=disable" "expected label=disable in pod security options"
 }
@@ -90,7 +90,7 @@ load helpers_tui
     podman_tui_select_pod_cmd "start"
     sleep $TEST_TIMEOUT_LOW
 
-    run_helper podman pod ls --filter="name=${TEST_POD_NAME}$" --format "{{ .Status}}"
+    run_helper ${PODMAN_CMD} pod ls --filter="name=${TEST_POD_NAME}$" --format "{{ .Status}}"
     assert $output =~ "Running" "expected $TEST_POD_NAME running"
 }
 
@@ -105,7 +105,7 @@ load helpers_tui
     podman_tui_select_pod_cmd "pause"
     sleep $TEST_TIMEOUT_LOW
 
-    run_helper podman pod ls --filter="name=${TEST_POD_NAME}$" --format "{{ .Status}}"
+    run_helper ${PODMAN_CMD} pod ls --filter="name=${TEST_POD_NAME}$" --format "{{ .Status}}"
     assert $output =~ "Paused" "expected $TEST_POD_NAME running"
 }
 
@@ -120,7 +120,7 @@ load helpers_tui
     podman_tui_select_pod_cmd "unpause"
     sleep $TEST_TIMEOUT_LOW
 
-    run_helper podman pod ls --filter="name=${TEST_POD_NAME}$" --format "{{ .Status}}"
+    run_helper ${PODMAN_CMD} pod ls --filter="name=${TEST_POD_NAME}$" --format "{{ .Status}}"
     assert $output =~ "Running" "expected $TEST_POD_NAME running"
 }
 
@@ -135,7 +135,7 @@ load helpers_tui
     podman_tui_select_pod_cmd "stop"
     sleep $TEST_TIMEOUT_LOW
 
-    run_helper podman pod ls --filter="name=${TEST_POD_NAME}$" --format "{{ .Status}}"
+    run_helper ${PODMAN_CMD} pod ls --filter="name=${TEST_POD_NAME}$" --format "{{ .Status}}"
     assert $output =~ "Exited" "expected $TEST_POD_NAME exited"
 }
 
@@ -150,7 +150,7 @@ load helpers_tui
     podman_tui_select_pod_cmd "restart"
     sleep $TEST_TIMEOUT_LOW
 
-    run_helper podman pod ls --filter="name=${TEST_POD_NAME}$" --format "{{ .Status}}"
+    run_helper ${PODMAN_CMD} pod ls --filter="name=${TEST_POD_NAME}$" --format "{{ .Status}}"
     assert $output =~ "Running" "expected $TEST_POD_NAME exited"
 }
 
@@ -165,7 +165,7 @@ load helpers_tui
     podman_tui_select_pod_cmd "kill"
     sleep $TEST_TIMEOUT_LOW
 
-    run_helper podman pod ls --filter="name=${TEST_POD_NAME}$" --format "{{ .Status}}"
+    run_helper ${PODMAN_CMD} pod ls --filter="name=${TEST_POD_NAME}$" --format "{{ .Status}}"
     assert $output =~ "Exited" "expected $TEST_POD_NAME exited"
 }
 
@@ -200,16 +200,16 @@ load helpers_tui
     podman_tui_send_inputs "Enter"
     sleep $TEST_TIMEOUT_LOW
 
-    run_helper podman pod ls --format "{{ .Name }}" --filter "name=${TEST_POD_NAME}$"
+    run_helper ${PODMAN_CMD} pod ls --format "{{ .Name }}" --filter "name=${TEST_POD_NAME}$"
     assert "$output" == "" "expected $TEST_POD_NAME pod removal"
 }
 
 @test "pod prune" {
     check_skip "pod_prune"
 
-    podman pod create --name $TEST_POD_NAME --label $TEST_LABEL || echo done
-    podman pod start $TEST_POD_NAME || echo done
-    podman pod stop $TEST_POD_NAME || echo done
+    ${PODMAN_CMD} pod create --name $TEST_POD_NAME --label $TEST_LABEL || echo done
+    ${PODMAN_CMD} pod start $TEST_POD_NAME || echo done
+    ${PODMAN_CMD} pod stop $TEST_POD_NAME || echo done
     sleep $TEST_TIMEOUT_LOW
 
     # switch to pods view
@@ -220,6 +220,6 @@ load helpers_tui
     podman_tui_send_inputs "Enter"
     sleep $TEST_TIMEOUT_LOW
 
-    run_helper podman pod ls --format "{{ .Name }}" --filter "name=${TEST_POD_NAME}$"
+    run_helper ${PODMAN_CMD} pod ls --format "{{ .Name }}" --filter "name=${TEST_POD_NAME}$"
     assert "$output" == "" "expected at least $TEST_POD_NAME pod removal"
 }

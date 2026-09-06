@@ -4,19 +4,12 @@
 PODMAN_TUI=${PODMAN_TUI:-./bin/podman-tui}
 PODMAN_TUI_DEBUG="$PODMAN_TUI -d"
 PODMAN_TUI_LOG="podman-tui.log"
-PODMAN_TUI_CONFIG_DIR="/root/.config/podman-tui"
-PODMAN_TUI_CONFIG_FILE="${PODMAN_TUI_CONFIG_DIR}/podman-tui.json"
 TMUX_SESSION="podman_tui_test"
 PODMAN_TUI_BAT_TEST=${PODMAN_TUI_BAT_TEST:-'all'}
-
+PODMAN_CMD="podman -r"
+PODMAN_CONNECTIONS_CONFIG="/root/.config/containers/podman-connections.json"
 
 function setup() {
-    # setup config file
-    [ ! -d "${PODMAN_TUI_CONFIG_DIR}" ] && mkdir -p ${PODMAN_TUI_CONFIG_DIR}
-    cat > ${PODMAN_TUI_CONFIG_FILE} << EOF
-{"connections":{"localhost":{"uri":"unix://run/podman/podman.sock","default":true},"localhost_test":{"uri":"unix://run/podman/podman.sock"}}}
-EOF
-
     # start podman socket
     if [ ! -f "${PODMAN_TUI}" ] ; then
         die "$PODMAN_TUI binary not found"
