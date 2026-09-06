@@ -34,7 +34,13 @@ jobs:
         run: |
           make binary
           mkdir -p ./dist/podman-tui-release-${GOOS}_${GOARCH}/podman-tui-${VERSION}/
-          cp -p ./bin/podman-tui ./dist/podman-tui-release-${GOOS}_${GOARCH}/podman-tui-${VERSION}
+          src_bin="podman-tui"
+
+          if [ "${GOOS}" == "windows" ] ; then
+            src_bin="podman-tui.exe"
+          fi
+          
+          cp -p ./bin/${src_bin} ./dist/podman-tui-release-${GOOS}_${GOARCH}/podman-tui-${VERSION}/
 
       - uses: actions/upload-artifact@v7
         env:
